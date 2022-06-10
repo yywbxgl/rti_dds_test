@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.3.2)
 project (example)
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
-    "/home/wangtao/rti_connext_dds-6.1.0/resource/template/rti_workspace/examples/getting_started/resources/cmake")
+    "/home/qiliang/rti_connext_dds-6.1.1/resource/cmake")
 
-find_package(RTIConnextDDS "6.1.0" REQUIRED)
+find_package(RTIConnextDDS "6.1.1" REQUIRED)
 #add_definitions(${CONNEXTDDS_COMPILE_DEFINITIONS})
 include_directories( ${CONNEXTDDS_INCLUDE_DIRS})
 
