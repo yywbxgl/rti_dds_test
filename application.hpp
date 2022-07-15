@@ -10,13 +10,13 @@
  * to use the software.
  */
 
-#ifndef APPLICATION_H
-#define APPLICATION_H
+#ifndef APPLICATION_HPP
+#define APPLICATION_HPP
 
 #include <iostream>
 #include <csignal>
-#include <limits>
-#include "ndds/ndds_cpp.h"
+#include <dds/core/ddscore.hpp>
+
 
 namespace application {
 
@@ -35,56 +35,57 @@ inline void setup_signal_handlers()
     signal(SIGTERM, stop_handler);
 }
 
-enum ParseReturn { PARSE_RETURN_OK, PARSE_RETURN_FAILURE, PARSE_RETURN_EXIT };
+enum class ParseReturn {
+    ok,
+    failure,
+    exit
+};
 
 struct ApplicationArguments {
     ParseReturn parse_result;
     unsigned int domain_id;
     unsigned int sample_count;
-    NDDS_Config_LogVerbosity verbosity;
+    rti::config::Verbosity verbosity;
 };
 
-
-// Parses application arguments for example.  Returns whether to exit.
-inline void parse_arguments(
-        ApplicationArguments& arguments,
-        int argc,
-        char *argv[])
+// Parses application arguments for example.
+inline ApplicationArguments parse_arguments(int argc, char *argv[])
 {
     int arg_processing = 1;
     bool show_usage = false;
-    arguments.domain_id = 0;
-    arguments.sample_count = (std::numeric_limits<unsigned int>::max)();
-    arguments.verbosity = NDDS_CONFIG_LOG_VERBOSITY_ERROR;
-    arguments.parse_result = PARSE_RETURN_OK;
+    ParseReturn parse_result = ParseReturn::ok;
+    unsigned int domain_id = 0;
+    unsigned int sample_count = (std::numeric_limits<unsigned int>::max)();
+    rti::config::Verbosity verbosity;
 
     while (arg_processing < argc) {
         if ((argc > arg_processing + 1)
-            && (strcmp(argv[arg_processing], "-d") == 0
-            || strcmp(argv[arg_processing], "--domain") == 0)) {
-            arguments.domain_id = atoi(argv[arg_processing + 1]);
+                && (strcmp(argv[arg_processing], "-d") == 0
+                || strcmp(argv[arg_processing], "--domain") == 0)) {
+            domain_id = atoi(argv[arg_processing + 1]);
             arg_processing += 2;
         } else if ((argc > arg_processing + 1)
                 && (strcmp(argv[arg_processing], "-s") == 0
                 || strcmp(argv[arg_processing], "--sample-count") == 0)) {
-            arguments.sample_count = atoi(argv[arg_processing + 1]);
+            sample_count = atoi(argv[arg_processing + 1]);
             arg_processing += 2;
         } else if ((argc > arg_processing + 1)
                 && (strcmp(argv[arg_processing], "-v") == 0
                 || strcmp(argv[arg_processing], "--verbosity") == 0)) {
-            arguments.verbosity =
-                    (NDDS_Config_LogVerbosity) atoi(argv[arg_processing + 1]);
+            verbosity =
+                    static_cast<rti::config::Verbosity::inner_enum>(
+                            atoi(argv[arg_processing + 1]));
             arg_processing += 2;
         } else if (strcmp(argv[arg_processing], "-h") == 0
                 || strcmp(argv[arg_processing], "--help") == 0) {
             std::cout << "Example application." << std::endl;
             show_usage = true;
-            arguments.parse_result = PARSE_RETURN_EXIT;
+            parse_result = ParseReturn::exit;
             break;
         } else {
             std::cout << "Bad parameter." << std::endl;
             show_usage = true;
-            arguments.parse_result = PARSE_RETURN_FAILURE;
+            parse_result = ParseReturn::failure;
             break;
         }
     }
@@ -101,8 +102,10 @@ inline void parse_arguments(
                     "                               Default: 0"
                 << std::endl;
     }
+
+    return { parse_result, domain_id, sample_count, verbosity };
 }
 
 }  // namespace application
 
-#endif  // APPLICATION_H
+#endif  // APPLICATION_HPP
